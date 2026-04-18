@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { port } from './src/core/config/config.js';
 import logger from './src/core/config/logger.js';
 import { app } from './src/app.js';
-import { port } from './src/core/config/config.js';
-
-const prisma = new PrismaClient();
+import prisma from './src/lib/prisma.js';
 
 prisma.$connect()
   .then(() => {

@@ -1,9 +1,11 @@
 import rateLimit from 'express-rate-limit';
 
 // Global limiter: 100 requests per 15 minutes
+// Set DISABLE_GLOBAL_LIMITER=true (e.g. for benchmarking) to bypass.
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skip: () => process.env.DISABLE_GLOBAL_LIMITER === 'true',
   message: { status: false, message: 'Too many requests, please try again later.' }
 });
 

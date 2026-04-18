@@ -5,16 +5,16 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    
     "dev": "nodemon index.js",
     "db:migrate": "npx prisma migrate dev --name init",
     "db:generate": "npx prisma generate",
     "db:seed": "node prisma/seed.js",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "bench": "node benchmarks/bench.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.7.0",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.6.0",
     "cookie-parser": "^1.4.7",
@@ -36,9 +36,10 @@
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",
+    "autocannon": "^8.0.0",
     "eslint": "^8.55.0",
     "nodemon": "^3.0.1",
     "prettier": "^3.2.5",
-    "prisma": "^5.22.0"
+    "prisma": "^7.7.0"
   }
 }
