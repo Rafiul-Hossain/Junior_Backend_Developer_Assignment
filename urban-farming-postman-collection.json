@@ -2,15 +2,24 @@
   "info": {
     "name": "Urban Farming Platform API",
     "_postman_id": "urban-farming-platform-api",
-    "description": "Complete API collection for the Interactive Urban Farming Platform",
+    "description": "Complete API collection for the Urban Farming Platform. Routes are mounted under /api/v1.\n\nRun Login (Customer / Vendor / Admin) first — test scripts automatically populate `token`, `vendor_token`, `admin_token` and `refresh_token` variables. Resource-creation requests also capture returned IDs (produce_id, rental_space_id, booking_id, order_id, plant_id, post_id, cert_id, vendor_id, user_id) for use in follow-up requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "base_url", "value": "http://localhost:5000/api/v1", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
-    { "key": "refresh_token", "value": "", "type": "string" },
     { "key": "vendor_token", "value": "", "type": "string" },
-    { "key": "admin_token", "value": "", "type": "string" }
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "vendor_id", "value": "", "type": "string" },
+    { "key": "produce_id", "value": "", "type": "string" },
+    { "key": "rental_space_id", "value": "", "type": "string" },
+    { "key": "booking_id", "value": "", "type": "string" },
+    { "key": "order_id", "value": "", "type": "string" },
+    { "key": "plant_id", "value": "", "type": "string" },
+    { "key": "post_id", "value": "", "type": "string" },
+    { "key": "cert_id", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -24,17 +33,9 @@
             "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Customer\",\n  \"email\": \"john@test.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"CUSTOMER\"\n}"
+              "raw": "{\n  \"name\": \"John Customer\",\n  \"email\": \"customer.new@test.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"CUSTOMER\"\n}"
             }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Registered successfully!\",\n  \"data\": {\n    \"id\": \"uuid-here\",\n    \"name\": \"John Customer\",\n    \"email\": \"john@test.com\",\n    \"role\": \"CUSTOMER\",\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n}"
-            }
-          ]
+          }
         },
         {
           "name": "Register Vendor",
@@ -44,25 +45,25 @@
             "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Jane Vendor\",\n  \"email\": \"jane@vendor.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"VENDOR\"\n}"
+              "raw": "{\n  \"name\": \"Jane Vendor\",\n  \"email\": \"vendor.new@test.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"VENDOR\"\n}"
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Login Customer",
+          "name": "Login (Customer) — saves token",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json.data && json.data.accessToken) {",
-                  "  pm.collectionVariables.set('token', json.data.accessToken);",
-                  "  pm.collectionVariables.set('refresh_token', json.data.refreshToken);",
+                  "const res = pm.response.json();",
+                  "if (res && res.data) {",
+                  "  pm.collectionVariables.set('token', res.data.accessToken);",
+                  "  pm.collectionVariables.set('refresh_token', res.data.refreshToken);",
+                  "  if (res.data.user) pm.collectionVariables.set('user_id', res.data.user.id);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -74,29 +75,21 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"customer1@urbanfarming.com\",\n  \"password\": \"Password123!\"\n}"
             }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"user\": { \"id\": \"uuid\", \"name\": \"Customer\", \"email\": \"customer1@urbanfarming.com\", \"role\": \"CUSTOMER\" },\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9...\",\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9...\"\n  }\n}"
-            }
-          ]
+          }
         },
         {
-          "name": "Login Vendor",
+          "name": "Login (Vendor) — saves vendor_token",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json.data && json.data.accessToken) {",
-                  "  pm.collectionVariables.set('vendor_token', json.data.accessToken);",
+                  "const res = pm.response.json();",
+                  "if (res && res.data) {",
+                  "  pm.collectionVariables.set('vendor_token', res.data.accessToken);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -108,22 +101,21 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"vendor1@urbanfarming.com\",\n  \"password\": \"Password123!\"\n}"
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Login Admin",
+          "name": "Login (Admin) — saves admin_token",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var json = pm.response.json();",
-                  "if (json.data && json.data.accessToken) {",
-                  "  pm.collectionVariables.set('admin_token', json.data.accessToken);",
+                  "const res = pm.response.json();",
+                  "if (res && res.data) {",
+                  "  pm.collectionVariables.set('admin_token', res.data.accessToken);",
                   "}"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -135,11 +127,10 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin@urbanfarming.com\",\n  \"password\": \"Password123!\"\n}"
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Refresh Token",
+          "name": "Refresh Access Token",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -148,18 +139,19 @@
               "mode": "raw",
               "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Forget Password",
+          "name": "Forget Password (send OTP)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{base_url}}/auth/forget-password", "host": ["{{base_url}}"], "path": ["auth", "forget-password"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@test.com\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer1@urbanfarming.com\"\n}"
+            }
+          }
         },
         {
           "name": "Verify OTP",
@@ -167,9 +159,11 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{base_url}}/auth/verify-code", "host": ["{{base_url}}"], "path": ["auth", "verify-code"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@test.com\",\n  \"otp\": \"123456\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer1@urbanfarming.com\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
         },
         {
           "name": "Reset Password",
@@ -177,12 +171,14 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{base_url}}/auth/reset-password", "host": ["{{base_url}}"], "path": ["auth", "reset-password"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"john@test.com\",\n  \"newPassword\": \"NewPassword123!\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer1@urbanfarming.com\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            }
+          }
         },
         {
-          "name": "Change Password",
+          "name": "Change Password (authenticated)",
           "request": {
             "method": "POST",
             "header": [
@@ -190,9 +186,11 @@
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/auth/change-password", "host": ["{{base_url}}"], "path": ["auth", "change-password"] },
-            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword123!\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            }
+          }
         },
         {
           "name": "Logout",
@@ -200,13 +198,12 @@
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
-          },
-          "response": []
+          }
         }
       ]
     },
     {
-      "name": "User",
+      "name": "Users",
       "item": [
         {
           "name": "Get My Profile",
@@ -214,53 +211,54 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{base_url}}/users/me", "host": ["{{base_url}}"], "path": ["users", "me"] }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Profile fetched\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"John Customer\",\n    \"email\": \"john@test.com\",\n    \"role\": \"CUSTOMER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n}"
-            }
-          ]
+          }
         },
         {
           "name": "Update My Profile",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/users/me", "host": ["{{base_url}}"], "path": ["users", "me"] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Updated\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\"\n}"
+            }
+          }
         }
       ]
     },
     {
-      "name": "Vendor",
+      "name": "Vendors",
       "item": [
         {
-          "name": "Create Vendor Profile",
+          "name": "Create Vendor Profile (upgrades user to VENDOR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('vendor_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/vendors", "host": ["{{base_url}}"], "path": ["vendors"] },
-            "body": { "mode": "raw", "raw": "{\n  \"farmName\": \"Green Roots Farm\",\n  \"farmLocation\": \"Brooklyn, NYC\"\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Vendor profile created\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"userId\": \"uuid\",\n    \"farmName\": \"Green Roots Farm\",\n    \"farmLocation\": \"Brooklyn, NYC\",\n    \"certificationStatus\": \"PENDING\",\n    \"isApproved\": false\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"farmName\": \"Sunny Rooftop Farm\",\n  \"farmLocation\": \"Downtown NYC\"\n}"
             }
-          ]
+          }
         },
         {
           "name": "Get My Vendor Profile",
@@ -268,194 +266,218 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vendor_token}}" }],
             "url": { "raw": "{{base_url}}/vendors/me", "host": ["{{base_url}}"], "path": ["vendors", "me"] }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Update Vendor Profile",
+          "name": "Update My Vendor Profile",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
             "url": { "raw": "{{base_url}}/vendors/me", "host": ["{{base_url}}"], "path": ["vendors", "me"] },
-            "body": { "mode": "raw", "raw": "{\n  \"farmName\": \"Updated Farm Name\",\n  \"farmLocation\": \"Queens, NYC\"\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"farmName\": \"Sunny Rooftop Farm (updated)\",\n  \"farmLocation\": \"Brooklyn Heights\"\n}"
+            }
+          }
         },
         {
-          "name": "Get All Vendors (Public)",
+          "name": "List All Vendors (public, paginated + search)",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/vendors?page=1&limit=10", "host": ["{{base_url}}"], "path": ["vendors"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
-          },
-          "response": []
+            "url": {
+              "raw": "{{base_url}}/vendors?page=1&limit=10&search=",
+              "host": ["{{base_url}}"],
+              "path": ["vendors"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "" }
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "Produce (Marketplace)",
+      "name": "Produce",
       "item": [
         {
-          "name": "Browse Marketplace (Public)",
+          "name": "Browse Produce (public, filters)",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/produce?page=1&limit=10",
+              "raw": "{{base_url}}/produce?page=1&limit=10&search=&category=&certified=",
               "host": ["{{base_url}}"],
               "path": ["produce"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "category", "value": "Vegetables", "disabled": true },
-                { "key": "search", "value": "tomato", "disabled": true },
-                { "key": "certified", "value": "true", "disabled": true }
+                { "key": "search", "value": "", "description": "name contains" },
+                { "key": "category", "value": "", "description": "e.g. Vegetables" },
+                { "key": "certified", "value": "", "description": "'true' to only show APPROVED" }
               ]
             }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Produce list fetched\",\n  \"data\": {\n    \"produces\": [\n      {\n        \"id\": \"uuid\",\n        \"name\": \"Organic Tomatoes\",\n        \"price\": \"5.99\",\n        \"category\": \"Vegetables\",\n        \"availableQuantity\": 50,\n        \"certificationStatus\": \"APPROVED\",\n        \"vendor\": { \"farmName\": \"Green Farm 1\", \"farmLocation\": \"Downtown NYC\" }\n      }\n    ],\n    \"pagination\": {\n      \"currentPage\": 1,\n      \"totalPages\": 10,\n      \"totalData\": 100,\n      \"hasNextPage\": true,\n      \"hasPrevPage\": false\n    }\n  }\n}"
-            }
-          ]
+          }
         },
         {
-          "name": "Get Single Produce (Public)",
+          "name": "Get Produce by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/produce/:id", "host": ["{{base_url}}"], "path": ["produce", ":id"], "variable": [{ "key": "id", "value": "paste-produce-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/produce/{{produce_id}}", "host": ["{{base_url}}"], "path": ["produce", "{{produce_id}}"] }
+          }
         },
         {
-          "name": "Add Produce (Vendor)",
+          "name": "Create Produce (vendor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('produce_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
             "url": { "raw": "{{base_url}}/produce", "host": ["{{base_url}}"], "path": ["produce"] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Fresh Kale\",\n  \"description\": \"Freshly harvested organic kale\",\n  \"price\": 3.99,\n  \"category\": \"Vegetables\",\n  \"availableQuantity\": 100\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organic Cherry Tomatoes\",\n  \"description\": \"Sweet, vine-ripened cherry tomatoes grown on our rooftop farm.\",\n  \"price\": 4.99,\n  \"category\": \"Vegetables\",\n  \"availableQuantity\": 50,\n  \"imageUrl\": \"https://example.com/tomatoes.jpg\"\n}"
+            }
+          }
         },
         {
-          "name": "Update Produce (Vendor)",
+          "name": "Update Produce (vendor)",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/produce/:id", "host": ["{{base_url}}"], "path": ["produce", ":id"], "variable": [{ "key": "id", "value": "paste-produce-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"price\": 4.50,\n  \"availableQuantity\": 80\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/produce/{{produce_id}}", "host": ["{{base_url}}"], "path": ["produce", "{{produce_id}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 5.49,\n  \"availableQuantity\": 75\n}"
+            }
+          }
         },
         {
-          "name": "Delete Produce (Vendor)",
+          "name": "Delete Produce (vendor)",
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{vendor_token}}" }],
-            "url": { "raw": "{{base_url}}/produce/:id", "host": ["{{base_url}}"], "path": ["produce", ":id"], "variable": [{ "key": "id", "value": "paste-produce-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/produce/{{produce_id}}", "host": ["{{base_url}}"], "path": ["produce", "{{produce_id}}"] }
+          }
         }
       ]
     },
     {
-      "name": "Rental Spaces",
+      "name": "Rentals",
       "item": [
         {
-          "name": "Browse Rental Spaces (Public)",
+          "name": "Browse Rental Spaces (public)",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/rentals?page=1&limit=10",
+              "raw": "{{base_url}}/rentals?page=1&limit=10&location=",
               "host": ["{{base_url}}"],
               "path": ["rentals"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "location", "value": "Brooklyn", "disabled": true }
+                { "key": "location", "value": "" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Get Single Rental Space (Public)",
+          "name": "Get Rental Space by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/rentals/:id", "host": ["{{base_url}}"], "path": ["rentals", ":id"], "variable": [{ "key": "id", "value": "paste-rental-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/rentals/{{rental_space_id}}", "host": ["{{base_url}}"], "path": ["rentals", "{{rental_space_id}}"] }
+          }
         },
         {
-          "name": "Create Rental Space (Vendor)",
+          "name": "Create Rental Space (vendor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('rental_space_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
             "url": { "raw": "{{base_url}}/rentals", "host": ["{{base_url}}"], "path": ["rentals"] },
-            "body": { "mode": "raw", "raw": "{\n  \"location\": \"Brooklyn Heights, NYC\",\n  \"size\": \"150 sq ft\",\n  \"pricePerMonth\": 120,\n  \"description\": \"Sunny rooftop garden plot with water access\"\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Rental space created\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"location\": \"Brooklyn Heights, NYC\",\n    \"size\": \"150 sq ft\",\n    \"pricePerMonth\": \"120.00\",\n    \"availability\": true\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Brooklyn Heights\",\n  \"size\": \"40 sq ft\",\n  \"pricePerMonth\": 120.00,\n  \"description\": \"Sunny corner plot, ideal for tomatoes and herbs.\"\n}"
             }
-          ]
+          }
         },
         {
-          "name": "Update Rental Space (Vendor)",
+          "name": "Update Rental Space (vendor)",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/rentals/:id", "host": ["{{base_url}}"], "path": ["rentals", ":id"], "variable": [{ "key": "id", "value": "paste-rental-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"pricePerMonth\": 135,\n  \"availability\": true\n}" }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Rental Bookings",
-      "item": [
+            "url": { "raw": "{{base_url}}/rentals/{{rental_space_id}}", "host": ["{{base_url}}"], "path": ["rentals", "{{rental_space_id}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerMonth\": 135.00,\n  \"availability\": true\n}"
+            }
+          }
+        },
         {
-          "name": "Book a Rental Space (Customer)",
+          "name": "Create Booking (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('booking_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/rentals/bookings", "host": ["{{base_url}}"], "path": ["rentals", "bookings"] },
-            "body": { "mode": "raw", "raw": "{\n  \"rentalSpaceId\": \"paste-rental-space-id-here\",\n  \"startDate\": \"2025-06-01\",\n  \"endDate\": \"2025-08-31\",\n  \"notes\": \"Planning to grow tomatoes and herbs\"\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Rental space booked successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"startDate\": \"2025-06-01T00:00:00.000Z\",\n    \"endDate\": \"2025-08-31T00:00:00.000Z\",\n    \"totalPrice\": \"360.00\",\n    \"status\": \"PENDING\",\n    \"rentalSpace\": { \"location\": \"Brooklyn Heights, NYC\", \"size\": \"150 sq ft\", \"pricePerMonth\": \"120.00\" }\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rentalSpaceId\": \"{{rental_space_id}}\",\n  \"startDate\": \"2026-05-01\",\n  \"endDate\": \"2026-08-01\",\n  \"notes\": \"Planning to grow herbs and leafy greens.\"\n}"
             }
-          ]
+          }
         },
         {
-          "name": "My Bookings (Customer)",
+          "name": "My Bookings (customer)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
@@ -465,65 +487,57 @@
               "path": ["rentals", "bookings", "my"],
               "query": [
                 { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "status", "value": "PENDING", "disabled": true }
+                { "key": "limit", "value": "10" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Get Single Booking",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/rentals/bookings/:id", "host": ["{{base_url}}"], "path": ["rentals", "bookings", ":id"], "variable": [{ "key": "id", "value": "paste-booking-id-here" }] }
-          },
-          "response": []
-        },
-        {
-          "name": "Cancel Booking (Customer)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/rentals/bookings/:id/cancel", "host": ["{{base_url}}"], "path": ["rentals", "bookings", ":id", "cancel"], "variable": [{ "key": "id", "value": "paste-booking-id-here" }] }
-          },
-          "response": []
-        },
-        {
-          "name": "Vendor - View Bookings on My Spaces",
+          "name": "Vendor Bookings (vendor)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vendor_token}}" }],
-            "url": { "raw": "{{base_url}}/rentals/bookings/vendor?page=1&limit=10", "host": ["{{base_url}}"], "path": ["rentals", "bookings", "vendor"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
-          },
-          "response": []
+            "url": {
+              "raw": "{{base_url}}/rentals/bookings/vendor?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["rentals", "bookings", "vendor"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
         },
         {
-          "name": "Vendor - Confirm Booking",
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/rentals/bookings/{{booking_id}}", "host": ["{{base_url}}"], "path": ["rentals", "bookings", "{{booking_id}}"] }
+          }
+        },
+        {
+          "name": "Cancel Booking (customer)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/rentals/bookings/{{booking_id}}/cancel", "host": ["{{base_url}}"], "path": ["rentals", "bookings", "{{booking_id}}", "cancel"] }
+          }
+        },
+        {
+          "name": "Update Booking Status (vendor)",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/rentals/bookings/:id/status", "host": ["{{base_url}}"], "path": ["rentals", "bookings", ":id", "status"], "variable": [{ "key": "id", "value": "paste-booking-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CONFIRMED\"\n}" }
-          },
-          "response": []
-        },
-        {
-          "name": "Vendor - Complete Booking",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{base_url}}/rentals/bookings/:id/status", "host": ["{{base_url}}"], "path": ["rentals", "bookings", ":id", "status"], "variable": [{ "key": "id", "value": "paste-booking-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"COMPLETED\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/rentals/bookings/{{booking_id}}/status", "host": ["{{base_url}}"], "path": ["rentals", "bookings", "{{booking_id}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            }
+          }
         }
       ]
     },
@@ -531,233 +545,269 @@
       "name": "Orders",
       "item": [
         {
-          "name": "Place Order (Customer)",
+          "name": "Place Order (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('order_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/orders", "host": ["{{base_url}}"], "path": ["orders"] },
-            "body": { "mode": "raw", "raw": "{\n  \"produceId\": \"paste-produce-id-here\",\n  \"quantity\": 3\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Order placed successfully\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"quantity\": 3,\n    \"totalPrice\": \"17.97\",\n    \"status\": \"PENDING\",\n    \"produce\": { \"name\": \"Organic Tomatoes\", \"price\": \"5.99\" }\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produceId\": \"{{produce_id}}\",\n  \"quantity\": 3\n}"
             }
-          ]
+          }
         },
         {
           "name": "My Orders",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/orders/my?page=1&limit=10", "host": ["{{base_url}}"], "path": ["orders", "my"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
-          },
-          "response": []
+            "url": {
+              "raw": "{{base_url}}/orders/my?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "my"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
         },
         {
-          "name": "Cancel Order (Customer)",
+          "name": "Cancel Order (customer)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/orders/:id/cancel", "host": ["{{base_url}}"], "path": ["orders", ":id", "cancel"], "variable": [{ "key": "id", "value": "paste-order-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/orders/{{order_id}}/cancel", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "cancel"] }
+          }
         },
         {
-          "name": "Update Order Status (Vendor)",
+          "name": "Update Order Status (vendor)",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/orders/:id/status", "host": ["{{base_url}}"], "path": ["orders", ":id", "status"], "variable": [{ "key": "id", "value": "paste-order-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"CONFIRMED\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/orders/{{order_id}}/status", "host": ["{{base_url}}"], "path": ["orders", "{{order_id}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            }
+          }
         }
       ]
     },
     {
-      "name": "Community Forum",
+      "name": "Community",
       "item": [
         {
-          "name": "Browse Posts (Public)",
+          "name": "List Posts (public)",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/community?page=1&limit=10",
+              "raw": "{{base_url}}/community?page=1&limit=10&search=&tag=",
               "host": ["{{base_url}}"],
               "path": ["community"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "tag", "value": "organic", "disabled": true },
-                { "key": "search", "value": "compost", "disabled": true }
+                { "key": "search", "value": "" },
+                { "key": "tag", "value": "" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Get Single Post (Public)",
+          "name": "Get Post by ID",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/community/:id", "host": ["{{base_url}}"], "path": ["community", ":id"], "variable": [{ "key": "id", "value": "paste-post-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/community/{{post_id}}", "host": ["{{base_url}}"], "path": ["community", "{{post_id}}"] }
+          }
         },
         {
-          "name": "Create Post",
+          "name": "Create Post (authenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('post_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/community", "host": ["{{base_url}}"], "path": ["community"] },
-            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Best composting tips for small spaces\",\n  \"postContent\": \"Here are my top tips for composting in a small urban garden...\",\n  \"tags\": [\"composting\", \"urban-farming\", \"tips\"]\n}" }
-          },
-          "response": []
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tips for container composting\",\n  \"postContent\": \"Small-space composting is easy with a sealed container and brown/green layers...\",\n  \"tags\": [\"composting\", \"urban-farming\", \"tips\"]\n}"
+            }
+          }
         },
         {
-          "name": "Delete Post",
+          "name": "Delete Post (author or admin)",
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/community/:id", "host": ["{{base_url}}"], "path": ["community", ":id"], "variable": [{ "key": "id", "value": "paste-post-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/community/{{post_id}}", "host": ["{{base_url}}"], "path": ["community", "{{post_id}}"] }
+          }
         }
       ]
     },
     {
-      "name": "Plant Tracking",
+      "name": "Plants",
       "item": [
         {
-          "name": "Start Plant Tracking (Customer)",
+          "name": "Create Plant Tracking (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('plant_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
             "url": { "raw": "{{base_url}}/plants", "host": ["{{base_url}}"], "path": ["plants"] },
-            "body": { "mode": "raw", "raw": "{\n  \"rentalSpaceId\": \"paste-rental-space-id-here\",\n  \"plantName\": \"Cherry Tomatoes\",\n  \"growthStage\": \"Seedling\",\n  \"healthStatus\": \"Excellent\",\n  \"harvestDate\": \"2025-09-01\",\n  \"notes\": \"Planted from organic seeds\"\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Plant tracking started\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"plantName\": \"Cherry Tomatoes\",\n    \"growthStage\": \"Seedling\",\n    \"healthStatus\": \"Excellent\",\n    \"harvestDate\": \"2025-09-01T00:00:00.000Z\"\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rentalSpaceId\": \"{{rental_space_id}}\",\n  \"plantName\": \"Basil\",\n  \"growthStage\": \"Seedling\",\n  \"healthStatus\": \"Healthy\",\n  \"harvestDate\": \"2026-07-15\",\n  \"notes\": \"Watered daily, placed in direct sun.\"\n}"
             }
-          ]
+          }
         },
         {
           "name": "My Plants",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/plants/my?page=1&limit=10", "host": ["{{base_url}}"], "path": ["plants", "my"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
-          },
-          "response": []
+            "url": {
+              "raw": "{{base_url}}/plants/my?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["plants", "my"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
         },
         {
-          "name": "Update Plant Status (Customer)",
+          "name": "Update Plant Tracking (customer) — emits Socket.IO event",
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "url": { "raw": "{{base_url}}/plants/:id", "host": ["{{base_url}}"], "path": ["plants", ":id"], "variable": [{ "key": "id", "value": "paste-plant-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"growthStage\": \"Flowering\",\n  \"healthStatus\": \"Good\",\n  \"notes\": \"First flowers appeared today!\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/plants/{{plant_id}}", "host": ["{{base_url}}"], "path": ["plants", "{{plant_id}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"growthStage\": \"Flowering\",\n  \"healthStatus\": \"Healthy\",\n  \"notes\": \"Blossoms appearing — staking stems.\",\n  \"imageUrl\": \"https://example.com/basil.jpg\"\n}"
+            }
+          }
         }
       ]
     },
     {
-      "name": "Sustainability Certifications",
+      "name": "Certifications",
       "item": [
         {
-          "name": "Submit Certification (Vendor)",
+          "name": "Submit Certification (vendor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.data && res.data.id) pm.collectionVariables.set('cert_id', res.data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{vendor_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{vendor_token}}" }
             ],
             "url": { "raw": "{{base_url}}/certifications", "host": ["{{base_url}}"], "path": ["certifications"] },
-            "body": { "mode": "raw", "raw": "{\n  \"certifyingAgency\": \"USDA Organic\",\n  \"certificationDate\": \"2024-03-15\",\n  \"documentUrl\": \"https://example.com/cert.pdf\"\n}" }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "Created",
-              "code": 201,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Certification submitted\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"certifyingAgency\": \"USDA Organic\",\n    \"certificationDate\": \"2024-03-15T00:00:00.000Z\",\n    \"status\": \"PENDING\"\n  }\n}"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"certifyingAgency\": \"USDA Organic\",\n  \"certificationDate\": \"2026-01-15\",\n  \"documentUrl\": \"https://example.com/cert.pdf\"\n}"
             }
-          ]
+          }
         },
         {
-          "name": "My Certifications (Vendor)",
+          "name": "My Certifications (vendor)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vendor_token}}" }],
             "url": { "raw": "{{base_url}}/certifications/my", "host": ["{{base_url}}"], "path": ["certifications", "my"] }
-          },
-          "response": []
+          }
         },
         {
-          "name": "All Certifications (Admin)",
+          "name": "List All Certifications (admin)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
             "url": {
-              "raw": "{{base_url}}/certifications?page=1&limit=10",
+              "raw": "{{base_url}}/certifications?page=1&limit=10&status=PENDING",
               "host": ["{{base_url}}"],
               "path": ["certifications"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "status", "value": "PENDING", "disabled": true }
+                { "key": "status", "value": "PENDING", "description": "PENDING | APPROVED | REJECTED" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Approve Certification (Admin)",
+          "name": "Approve / Reject Certification (admin)",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/certifications/:id/approve", "host": ["{{base_url}}"], "path": ["certifications", ":id", "approve"], "variable": [{ "key": "id", "value": "paste-cert-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Certification (Admin)",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{base_url}}/certifications/:id/approve", "host": ["{{base_url}}"], "path": ["certifications", ":id", "approve"], "variable": [{ "key": "id", "value": "paste-cert-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"REJECTED\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/certifications/{{cert_id}}/approve", "host": ["{{base_url}}"], "path": ["certifications", "{{cert_id}}", "approve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            }
+          }
         }
       ]
     },
@@ -770,18 +820,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
             "url": { "raw": "{{base_url}}/admin/dashboard", "host": ["{{base_url}}"], "path": ["admin", "dashboard"] }
-          },
-          "response": [
-            {
-              "name": "Success",
-              "status": "OK",
-              "code": 200,
-              "body": "{\n  \"status\": true,\n  \"message\": \"Dashboard stats\",\n  \"data\": {\n    \"totalUsers\": 15,\n    \"totalVendors\": 10,\n    \"totalProduce\": 100,\n    \"totalOrders\": 25,\n    \"pendingCerts\": 3\n  }\n}"
-            }
-          ]
+          }
         },
         {
-          "name": "Get All Users",
+          "name": "List All Users",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
@@ -791,61 +833,48 @@
               "path": ["admin", "users"],
               "query": [
                 { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "role", "value": "VENDOR", "disabled": true },
-                { "key": "status", "value": "ACTIVE", "disabled": true }
+                { "key": "limit", "value": "10" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Suspend User",
+          "name": "Update User Status",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/admin/users/:id/status", "host": ["{{base_url}}"], "path": ["admin", "users", ":id", "status"], "variable": [{ "key": "id", "value": "paste-user-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SUSPENDED\"\n}" }
-          },
-          "response": []
-        },
-        {
-          "name": "Activate User",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{base_url}}/admin/users/:id/status", "host": ["{{base_url}}"], "path": ["admin", "users", ":id", "status"], "variable": [{ "key": "id", "value": "paste-user-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACTIVE\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/admin/users/{{user_id}}/status", "host": ["{{base_url}}"], "path": ["admin", "users", "{{user_id}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUSPENDED\"\n}"
+            }
+          }
         },
         {
           "name": "Approve Vendor",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
-            "url": { "raw": "{{base_url}}/admin/vendors/:id/approve", "host": ["{{base_url}}"], "path": ["admin", "vendors", ":id", "approve"], "variable": [{ "key": "id", "value": "paste-vendor-profile-id-here" }] }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/admin/vendors/{{vendor_id}}/approve", "host": ["{{base_url}}"], "path": ["admin", "vendors", "{{vendor_id}}", "approve"] }
+          }
         },
         {
           "name": "Approve Produce Certification",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
-            "url": { "raw": "{{base_url}}/admin/produce/:id/certification", "host": ["{{base_url}}"], "path": ["admin", "produce", ":id", "certification"], "variable": [{ "key": "id", "value": "paste-produce-id-here" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
-          },
-          "response": []
+            "url": { "raw": "{{base_url}}/admin/produce/{{produce_id}}/certification", "host": ["{{base_url}}"], "path": ["admin", "produce", "{{produce_id}}", "certification"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            }
+          }
         }
       ]
     }

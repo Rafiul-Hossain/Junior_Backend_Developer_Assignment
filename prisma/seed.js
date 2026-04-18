@@ -1,7 +1,10 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 const categories = ['Vegetables', 'Fruits', 'Herbs', 'Seeds', 'Tools'];
 const locations = ['Downtown NYC', 'Brooklyn Heights', 'Queens Village', 'Bronx Park', 'Staten Island'];
@@ -11,9 +14,10 @@ const growthStages = ['Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Harves
 async function main() {
   console.log('Seeding database...');
 
-  // Clear existing data
+  // Clear existing data (children first)
   await prisma.order.deleteMany();
   await prisma.plantTracking.deleteMany();
+  await prisma.rentalBooking.deleteMany();
   await prisma.sustainabilityCert.deleteMany();
   await prisma.produce.deleteMany();
   await prisma.rentalSpace.deleteMany();
@@ -113,8 +117,9 @@ async function main() {
   console.log(`${produceCount} produce items created`);
 
   // 4. Create 5 CUSTOMERS
+  const customers = [];
   for (let i = 1; i <= 5; i++) {
-    await prisma.user.create({
+    const customer = await prisma.user.create({
       data: {
         name: `Customer User ${i}`,
         email: `customer${i}@urbanfarming.com`,
@@ -123,6 +128,7 @@ async function main() {
         status: 'ACTIVE'
       }
     });
+    customers.push(customer);
   }
   console.log('5 customers created');
 
@@ -144,6 +150,93 @@ async function main() {
     });
   }
   console.log('Community posts created');
+
+  // 6. Create Orders (mix of statuses)
+  const allProduce = await prisma.produce.findMany();
+  const orderStatuses = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'];
+  let orderCount = 0;
+  for (let i = 0; i < 20; i++) {
+    const customer = customers[i % customers.length];
+    const produce = allProduce[Math.floor(Math.random() * allProduce.length)];
+    const quantity = Math.floor(Math.random() * 4) + 1;
+    const totalPrice = Number(produce.price) * quantity;
+    const status = orderStatuses[i % orderStatuses.length];
+
+    await prisma.$transaction(async (tx) => {
+      await tx.order.create({
+        data: {
+          userId: customer.id,
+          produceId: produce.id,
+          vendorId: produce.vendorId,
+          quantity,
+          totalPrice,
+          status
+        }
+      });
+      if (status !== 'CANCELLED') {
+        await tx.produce.update({
+          where: { id: produce.id },
+          data: { availableQuantity: { decrement: quantity } }
+        });
+      }
+    });
+    orderCount++;
+  }
+  console.log(`${orderCount} orders created`);
+
+  // 7. Create Rental Bookings
+  const allRentalSpaces = await prisma.rentalSpace.findMany();
+  const bookingStatuses = ['PENDING', 'CONFIRMED', 'CONFIRMED', 'COMPLETED'];
+  const bookings = [];
+  for (let i = 0; i < 8; i++) {
+    const customer = customers[i % customers.length];
+    const space = allRentalSpaces[i % allRentalSpaces.length];
+    const startOffsetDays = 7 + i * 14;
+    const startDate = new Date(Date.now() + startOffsetDays * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + (i % 3) + 1);
+    const months = (i % 3) + 1;
+    const totalPrice = Number(space.pricePerMonth) * months;
+    const status = bookingStatuses[i % bookingStatuses.length];
+
+    const booking = await prisma.rentalBooking.create({
+      data: {
+        customerId: customer.id,
+        rentalSpaceId: space.id,
+        startDate,
+        endDate,
+        totalPrice,
+        status,
+        notes: `Booked ${space.size} for growing seasonal crops.`
+      }
+    });
+    bookings.push({ booking, customer, space });
+  }
+  console.log(`${bookings.length} rental bookings created`);
+
+  // 8. Create Plant Tracking entries (anchored to existing bookings)
+  const plantNames = ['Basil', 'Tomato', 'Mint', 'Kale', 'Spinach', 'Pepper', 'Cucumber', 'Lettuce'];
+  const healthStatuses = ['Healthy', 'Needs Water', 'Thriving', 'Recovering'];
+  let plantCount = 0;
+  for (let i = 0; i < 12; i++) {
+    const { customer, space } = bookings[i % bookings.length];
+    const harvestDate = new Date();
+    harvestDate.setDate(harvestDate.getDate() + 30 + (i * 7));
+
+    await prisma.plantTracking.create({
+      data: {
+        userId: customer.id,
+        rentalSpaceId: space.id,
+        plantName: plantNames[i % plantNames.length],
+        growthStage: growthStages[i % growthStages.length],
+        healthStatus: healthStatuses[i % healthStatuses.length],
+        harvestDate,
+        notes: `Planted during spring cycle — checking weekly.`
+      }
+    });
+    plantCount++;
+  }
+  console.log(`${plantCount} plant tracking entries created`);
 
   console.log('\nDatabase seeded successfully!');
   console.log('-----------------------------------');
